@@ -24,13 +24,9 @@ contract MetamorphicLayer is ERC721A, Pausable, Ownable{
     mapping(address => Allowed) public allowList;
     mapping(address => uint256) public minted;
     
-    // constructor(string memory _baseUri, bytes32 _merkleRoot) ERC721A("Metamorphic by DAILLY", "METAMORPHIC") {
-    //     merkleRoot = _merkleRoot;
-    //     baseURI = _baseUri;
-    // }
-
-    constructor() ERC721A("Metamorphic Layer", "METALAYER") {
-
+    constructor(string memory _baseUri, bytes32 _merkleRoot) ERC721A("Metamorphic by DAILLY", "METAMORPHIC") {
+        merkleRoot = _merkleRoot;
+        baseURI = _baseUri;
     }
 
     function listMint(bytes32[] calldata _merkelProof, uint256 quantity) external payable whenNotPaused {
