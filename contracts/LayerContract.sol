@@ -24,9 +24,13 @@ contract MetamorphicLayer is ERC721A, Pausable, Ownable{
     mapping(address => Allowed) public allowList;
     mapping(address => uint256) public minted;
     
-    constructor(string memory _baseUri, bytes32 _merkleRoot) ERC721A("Metamorphic by DAILLY", "METAMORPHIC") {
-        merkleRoot = _merkleRoot;
-        baseURI = _baseUri;
+    // constructor(string memory _baseUri, bytes32 _merkleRoot) ERC721A("Metamorphic by DAILLY", "METAMORPHIC") {
+    //     merkleRoot = _merkleRoot;
+    //     baseURI = _baseUri;
+    // }
+
+    constructor() ERC721A("Metamorphic Layer", "METALAYER") {
+
     }
 
     function listMint(bytes32[] calldata _merkelProof, uint256 quantity) external payable whenNotPaused {
@@ -106,6 +110,20 @@ contract MetamorphicLayer is ERC721A, Pausable, Ownable{
         _unpause();
     }
     
+    function getNftsByOwner(address nftOwner) external view returns(uint256[] memory) {
+        uint256[] memory ids = new uint[](balanceOf(nftOwner));
+        uint256 counter = 0;
+        
+        for(uint256 i = 1; i <= totalSupply(); i++) {
+            if(ownerOf(i) == nftOwner){
+                ids[counter] = i;
+                counter++;
+            } 
+        }
+
+        return ids;
+    }
+
     function withdraw(address payable receiverAddress, uint _withdrawAmount) external onlyOwner {
         require(address(this).balance >= _withdrawAmount, "Low balance!");
         
