@@ -13,6 +13,8 @@ contract MetamorphicLayer is ERC721A, Pausable, Ownable{
     string private baseURI;
     uint256 public price = 0.3 ether;
     uint256 public maxSupply = 0;
+    bool public isListSaleActive = false;
+    bool public isPublicSaleActive = false;
 
     struct Allowed {
         address user;
@@ -24,17 +26,17 @@ contract MetamorphicLayer is ERC721A, Pausable, Ownable{
     mapping(address => Allowed) public allowList;
     mapping(address => uint256) public minted;
     
-    // constructor(string memory _baseUri, bytes32 _merkleRoot) ERC721A("Metamorphic by DAILLY", "METAMORPHIC") {
+    // constructor(string memory _baseUri, bytes32 _merkleRoot) ERC721A("Metamorphic Layer", "METALAYER") {
     //     merkleRoot = _merkleRoot;
     //     baseURI = _baseUri;
     // }
 
     constructor() ERC721A("Metamorphic Layer", "METALAYER") {
-
+        
     }
 
-    function listMint(bytes32[] calldata _merkelProof, uint256 quantity) external payable whenNotPaused {
-        //checking if user(s) claimed their nft
+    function listMint(bytes32[] calldata _merkelProof, uint256 quantity) external payable {
+        require(isListSaleActive, "List sale is inactive!");
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         require(MerkleProof.verify(_merkelProof, merkleRoot, leaf), "Not allowed!");
         require(maxSupply + quantity <= 3600, "Max supply exceeded!");
@@ -46,12 +48,12 @@ contract MetamorphicLayer is ERC721A, Pausable, Ownable{
 
         _mint(msg.sender, quantity);
     }
-    
-    function mint(uint256 quantity, uint8 v, bytes32 r, bytes32 s) external payable whenNotPaused {
+
+    function mint(uint256 quantity, uint8 v, bytes32 r, bytes32 s) external payable {
+        require(isPublicSaleActive  && !isListSaleActive, "Error: Please check sales states!");
         require(msg.value >= price * quantity, "Not enough eth!");
-        require(allowList[msg.sender].maxAllowed == 0, "List user minting!");
         require(maxSupply + quantity <= 3600, "Max supply exceeded!");
-        require(minted[msg.sender] + quantity <= 30, "Mint limit exceeded!");
+        require(minted[msg.sender] + quantity <= 30 + allowList[msg.sender].maxAllowed, "Mint limit exceeded!");
 
         bytes32 message = keccak256(abi.encodePacked(msg.sender, quantity, price));
         bytes32 hashedMessage = hashMessage(message);
@@ -64,7 +66,7 @@ contract MetamorphicLayer is ERC721A, Pausable, Ownable{
         _mint(msg.sender, quantity);
     }
 
-    function teamMint(uint256 quantity) external {
+    function teamMint(uint256 quantity) external onlyOwner {
         maxSupply += quantity;
         _mint(msg.sender, quantity);
     }
@@ -102,12 +104,12 @@ contract MetamorphicLayer is ERC721A, Pausable, Ownable{
         _burn(tokenId, true);
     }
 
-    function pause() public onlyOwner {
-        _pause();
+    function setListSaleState(bool state) public onlyOwner {
+        isListSaleActive = state;
     }
 
-    function unpause() public onlyOwner {
-        _unpause();
+    function setPublicSaleState(bool state) public onlyOwner {
+        isPublicSaleActive = state;
     }
     
     function getNftsByOwner(address nftOwner) external view returns(uint256[] memory) {
